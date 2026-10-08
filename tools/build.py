@@ -72,6 +72,8 @@ BUILD_BOOT_IMG=""
 . ${ROOT_DIR}/${KERNEL_DIR}/build.config.redbull.common.clang
 DEFCONFIG=pixel5_ci_defconfig
 POST_DEFCONFIG_CMDS=""
+KMI_SYMBOL_LIST=android/abi_gki_aarch64_redbull
+TRIM_NONLISTED_KMI=1
 BUILD_BOOT_IMG=""
 BUILD_VENDOR_BOOT_IMG=""
 BUILD_INITRAMFS=1
