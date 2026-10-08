@@ -6,7 +6,7 @@
 
 以 GitHub Actions 為 **Pixel 5（redfin）原廠 Android 14 `UP1A.231105.001.B2`** 編譯 KernelSU Next 核心，再於自己的電腦使用原廠 boot 打包。
 
-**目前為實驗性專案。已在一部 Pixel 5 驗證暫時開機，以及 A 槽永久刷入後正常開機；root 授權與實際硬體功能仍待驗證。** 完整結果見 [驗證紀錄](docs/validation.md)。
+**目前為實驗性專案。已在一部 Pixel 5 驗證暫時開機、A 槽永久刷入後正常開機，以及 Shell root（uid=0）；實際硬體功能仍待完整驗證。** 完整結果見 [驗證紀錄](docs/validation.md)。
 
 [首個成功建置](https://github.com/7WayneLee/pixel5-kernelsu-next/actions/runs/37741524948) 已完成原廠與 Next 編譯、9,115 個匯出符號 CRC 比對，以及本機 218 個原廠 vendor_boot 模組的檢查。
 
@@ -61,7 +61,9 @@ python3 tools/pack_boot.py \
 
 ## 首次測試
 
-先安裝 [官方 KernelSU Next Manager v3.4.0](https://github.com/KernelSU-Next/KernelSU-Next/releases/tag/v3.4.0)。本專案沒有變更官方管理器簽章，也沒有加入 SUSFS。
+先安裝 [官方 Manager 建置（33323、UAPI 5）](https://github.com/KernelSU-Next/KernelSU-Next/actions/runs/37513294225)：登入 GitHub，下載該 run 的 `manager` artifact 並解壓 APK；使用正常版，勿選 `manager-spoofed`。此核心使用 UAPI 5，正式版 v3.4.0 的 Manager（33294、UAPI 4）會顯示版本過舊，不能作為此 profile 的相容管理器。本專案沒有變更官方管理器簽章，也沒有加入 SUSFS。
+
+下載來源、commit、APK SHA-256 與簽署憑證固定在 [manager lock](sources/manager.lock.json)。若該 artifact 已過期，必須重新核對其他官方 UAPI 5 Manager 的來源、簽章與相容性。固定產物的 APK SHA-256：`16ce430c80aaf0daa2832ebffd2f4777bdf7d9da7df02ed384f7b1c38c4220fb`。
 
 保留原廠 boot 備份，先使用暫時開機：
 

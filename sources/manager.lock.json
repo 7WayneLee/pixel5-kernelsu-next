@@ -1,0 +1,22 @@
+{
+  "run_url": "https://github.com/KernelSU-Next/KernelSU-Next/actions/runs/37513294225",
+  "commit": "3daa57876983f64755b85adaf8acb69c2b09af3a",
+  "artifact_id": 11436802251,
+  "artifact_name": "manager",
+  "archive_sha256": "53e2f4938ef45862952923df9d0627b07c292633bac073e05003eb0974b3465d",
+  "apk_name": "KernelSU_Next_v3.4.0-29-g3daa5787_33323-release.apk",
+  "apk_sha256": "16ce430c80aaf0daa2832ebffd2f4777bdf7d9da7df02ed384f7b1c38c4220fb",
+  "certificates": [
+    {
+      "size": 998,
+      "sha256": "79e590113c4c4c0c222978e413a5faa801666957b1212a328e46c00c69821bf7"
+    }
+  ],
+  "certificate_matches_kernel": true,
+  "schema_version": 1,
+  "repository": "KernelSU-Next/KernelSU-Next",
+  "version_name": "v3.4.0-29-g3daa5787",
+  "version_code": 33323,
+  "uapi_version": 5,
+  "package": "com.rifsxd.ksunext"
+}

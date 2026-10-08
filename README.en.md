@@ -4,11 +4,11 @@
 
 [繁體中文](README.md)
 
-The [first successful build](https://github.com/7WayneLee/pixel5-kernelsu-next/actions/runs/37741524948) compiled stock and Next, retained all 9,115 exported symbol CRCs, and passed local checks against 218 stock vendor_boot modules. Temporary boot and normal boot after permanent flashing to slot A passed on one Pixel 5. Root authorization and physical hardware functions remain unverified.
+The [first successful build](https://github.com/7WayneLee/pixel5-kernelsu-next/actions/runs/37741524948) compiled stock and Next, retained all 9,115 exported symbol CRCs, and passed local checks against 218 stock vendor_boot modules. Temporary boot and normal boot after permanent flashing to slot A passed on one Pixel 5. ADB Shell root (uid=0) has also been verified; physical hardware functions remain unverified.
 
 Build a KernelSU Next kernel for **Google Pixel 5 (redfin), stock Android 14 UP1A.231105.001.B2**, using GitHub Actions. Pack the kernel into your own factory boot image locally.
 
-**Experimental: boot has been validated on one device; root authorization and physical hardware testing are still incomplete.** See [validation status](docs/validation.md).
+**Experimental: boot and ADB Shell root have been validated on one device; physical hardware testing is still incomplete.** See [validation status](docs/validation.md).
 
 ## Build
 
@@ -33,7 +33,7 @@ The packer verifies stock image hashes, artifact hashes, baseline ABI comparison
 
 ## Test before flashing
 
-Install the [official Next Manager v3.4.0](https://github.com/KernelSU-Next/KernelSU-Next/releases/tag/v3.4.0). Keep your factory boot backup. Verify the product is redfin, note the active slot, and test a temporary boot:
+Install the [official Manager build 33323, UAPI 5](https://github.com/KernelSU-Next/KernelSU-Next/actions/runs/37513294225). Sign in to GitHub, download the `manager` artifact, and extract the APK; use the normal build rather than `manager-spoofed`. The release v3.4.0 Manager (33294, UAPI 4) reports that it is too old for this UAPI 5 kernel. The pinned source, APK hash and official signing certificate are in [manager lock](sources/manager.lock.json). If this artifact expires, verify another official UAPI 5 Manager before substituting it. Keep your factory boot backup. Verify the product is redfin, note the active slot, and test a temporary boot:
 
 ```bash
 adb reboot bootloader
