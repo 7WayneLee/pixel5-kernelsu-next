@@ -13,10 +13,12 @@ Build a KernelSU Next kernel for Pixel 5 using GitHub Actions.
 | Firmware | `UP1A.231105.001.B2` |
 | Kernel | `4.19.278-g7b0944645172-ab10812814` |
 | KernelSU Next | `v3.4.0-legacy-pixel5` · 33306 · UAPI 5 |
-| Manager | 33323 · UAPI 5 ([official build](https://github.com/KernelSU-Next/KernelSU-Next/actions/runs/37513294225), artifact: `manager`) |
+| Manager | [v3.4.0-29-g3daa5787](https://github.com/KernelSU-Next/KernelSU-Next/actions/runs/37513294225) · 33323 · UAPI 5 |
 | Integration | Built-in, manual hooks; stock CFI/LTO/MODVERSIONS retained |
 | Bootloader | Unlocked |
 | Validation | Boot and ADB root verified on one device; full hardware testing pending ([record](docs/validation.md)) |
+
+**Manager compatibility:** use the linked, verified UAPI 5 build. Sign in to GitHub and download its `manager` artifact. The v3.4.0 release APK (33294, UAPI 4) is incompatible with this kernel.
 
 Only the device and stock firmware listed above are supported. Exact source versions are recorded in the [kernel profile](profiles/redfin-up1a-231105-001-b2.json) and [Manager lock](sources/manager.lock.json).
 
