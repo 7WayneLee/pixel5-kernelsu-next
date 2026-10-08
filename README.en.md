@@ -1,6 +1,10 @@
 # Pixel 5 KernelSU Next Builder
 
+[![Tooling CI](https://github.com/7WayneLee/pixel5-kernelsu-next/actions/workflows/ci.yml/badge.svg)](https://github.com/7WayneLee/pixel5-kernelsu-next/actions/workflows/ci.yml)
+
 [繁體中文](README.md)
+
+The [first successful build](https://github.com/7WayneLee/pixel5-kernelsu-next/actions/runs/37741524948) compiled stock and Next, retained all 9,115 exported symbol CRCs, and passed local checks against 218 stock vendor_boot modules. Hardware boot and root remain untested.
 
 Build a KernelSU Next kernel for **Google Pixel 5 (redfin), stock Android 14 UP1A.231105.001.B2**, using GitHub Actions. Pack the kernel into your own factory boot image locally.
 

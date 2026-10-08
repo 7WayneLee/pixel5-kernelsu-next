@@ -1,10 +1,14 @@
 # Pixel 5 KernelSU Next Builder
 
+[![Tooling CI](https://github.com/7WayneLee/pixel5-kernelsu-next/actions/workflows/ci.yml/badge.svg)](https://github.com/7WayneLee/pixel5-kernelsu-next/actions/workflows/ci.yml)
+
 [English](README.en.md)
 
 以 GitHub Actions 為 **Pixel 5（redfin）原廠 Android 14 `UP1A.231105.001.B2`** 編譯 KernelSU Next 核心，再於自己的電腦使用原廠 boot 打包。
 
 **目前為實驗性專案，尚未完成實機開機與 root 驗證。Actions 成功只代表編譯和靜態檢查通過。** 第一個實機測試結果會記錄在 [驗證紀錄](docs/validation.md)。
+
+[首個成功建置](https://github.com/7WayneLee/pixel5-kernelsu-next/actions/runs/37741524948) 已完成原廠與 Next 編譯、9,115 個匯出符號 CRC 比對，以及本機 218 個原廠 vendor_boot 模組的檢查。
 
 ## 支援範圍
 
