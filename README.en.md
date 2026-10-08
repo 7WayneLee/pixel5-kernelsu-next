@@ -4,11 +4,11 @@
 
 [繁體中文](README.md)
 
-The [first successful build](https://github.com/7WayneLee/pixel5-kernelsu-next/actions/runs/37741524948) compiled stock and Next, retained all 9,115 exported symbol CRCs, and passed local checks against 218 stock vendor_boot modules. Hardware boot and root remain untested.
+The [first successful build](https://github.com/7WayneLee/pixel5-kernelsu-next/actions/runs/37741524948) compiled stock and Next, retained all 9,115 exported symbol CRCs, and passed local checks against 218 stock vendor_boot modules. Temporary boot and normal boot after permanent flashing to slot A passed on one Pixel 5. Root authorization and physical hardware functions remain unverified.
 
 Build a KernelSU Next kernel for **Google Pixel 5 (redfin), stock Android 14 UP1A.231105.001.B2**, using GitHub Actions. Pack the kernel into your own factory boot image locally.
 
-**Experimental: hardware boot and root validation have not been completed. A successful workflow confirms compilation and static checks only.** See [validation status](docs/validation.md).
+**Experimental: boot has been validated on one device; root authorization and physical hardware testing are still incomplete.** See [validation status](docs/validation.md).
 
 ## Build
 
@@ -20,7 +20,7 @@ The workflow builds the stock baseline before integrating the pinned Next legacy
 
 ## Pack locally
 
-Install Python 3.11+ and `lz4` (macOS: `brew install lz4`; Linux: `sudo apt install lz4`). Obtain the exact factory firmware from [Google](https://developers.google.com/android/images#redfin). Copy `boot.img` and `vendor_boot.img` to a directory and name them `stock-boot.img` and `stock-vendor_boot.img`.
+Install Python 3.11+, `lz4` and `openssl` (macOS: `brew install lz4 openssl`; Linux: `sudo apt install lz4 openssl`). Obtain the exact factory firmware from [Google](https://developers.google.com/android/images#redfin). Copy `boot.img` and `vendor_boot.img` to a directory and name them `stock-boot.img` and `stock-vendor_boot.img`.
 
 ```bash
 python3 tools/pack_boot.py \
@@ -29,7 +29,7 @@ python3 tools/pack_boot.py \
   --output-dir /path/to/new-output-directory
 ```
 
-The packer verifies stock image hashes, artifact hashes, baseline ABI comparison, and the import CRCs and vermagic of every module in stock vendor_boot. It stops on any mismatch. It replaces only the boot kernel, preserves the stock boot ramdisk, and removes obsolete boot AVB metadata. Stock vendor_boot, its DTB, and dtbo remain unchanged. An already-unlocked bootloader is required. Factory images are neither uploaded nor distributed by this project.
+The packer verifies stock image hashes, artifact hashes, baseline ABI comparison, and the import CRCs and vermagic of every module in stock vendor_boot. It stops on any mismatch. It replaces only the boot kernel, preserves the stock boot ramdisk, and regenerates and verifies the boot AVB footer while preserving the stock rollback index, firmware fingerprint and security patch date. Stock vendor_boot, its DTB, and dtbo remain unchanged. The regenerated footer uses Google's publicly distributed test signing key, rather than an OEM signature. An already-unlocked bootloader is required; do not relock it while this image is installed. Factory images are neither uploaded nor distributed by this project.
 
 ## Test before flashing
 

@@ -6,7 +6,7 @@
 
 以 GitHub Actions 為 **Pixel 5（redfin）原廠 Android 14 `UP1A.231105.001.B2`** 編譯 KernelSU Next 核心，再於自己的電腦使用原廠 boot 打包。
 
-**目前為實驗性專案，尚未完成實機開機與 root 驗證。Actions 成功只代表編譯和靜態檢查通過。** 第一個實機測試結果會記錄在 [驗證紀錄](docs/validation.md)。
+**目前為實驗性專案。已在一部 Pixel 5 驗證暫時開機，以及 A 槽永久刷入後正常開機；root 授權與實際硬體功能仍待驗證。** 完整結果見 [驗證紀錄](docs/validation.md)。
 
 [首個成功建置](https://github.com/7WayneLee/pixel5-kernelsu-next/actions/runs/37741524948) 已完成原廠與 Next 編譯、9,115 個匯出符號 CRC 比對，以及本機 218 個原廠 vendor_boot 模組的檢查。
 
@@ -34,7 +34,7 @@
 
 ## 在自己的電腦打包 boot
 
-需要 Python 3.11+ 和 lz4。macOS 可以執行 `brew install lz4`；Linux 可以執行 `sudo apt install lz4`。
+需要 Python 3.11+、lz4 和 openssl。macOS 可以執行 `brew install lz4 openssl`；Linux 可以執行 `sudo apt install lz4 openssl`。
 
 從 [Google factory images](https://developers.google.com/android/images#redfin) 取得同一版本，將 `boot.img` 和 `vendor_boot.img` 複製至自己的資料夾並命名為：
 
@@ -55,7 +55,7 @@ python3 tools/pack_boot.py \
 
 工具會核對原廠映像 SHA-256、產物雜湊、基準與 Next ABI，並讀取原廠 `vendor_boot` 內所有核心模組的 vermagic 和匯入符號 CRC。只要不相容就停止，不會提供「忽略檢查」選項。
 
-輸出包含 `boot-redfin-up1a-231105-001-b2-ksun.img`、校驗檔及打包紀錄。只替換 boot 內的核心，保留原廠 ramdisk；原廠 `vendor_boot`、DTB 與 dtbo 都保留。原 boot 的 AVB 簽章不再適用，因此打包時移除其舊 AVB metadata，僅供已解鎖的 bootloader 使用。
+輸出包含 `boot-redfin-up1a-231105-001-b2-ksun.img`、校驗檔及打包紀錄。只替換 boot 內的核心，保留原廠 ramdisk；原廠 `vendor_boot`、DTB 與 dtbo 都保留。工具會重建並驗證 AVB footer，保留原廠回滾索引、韌體 fingerprint 與安全修補日期。新簽章使用 Google 公開散布的測試簽署金鑰，僅供已解鎖的 bootloader 使用，不能取代原廠簽章。不要在使用此映像時重新鎖定 bootloader。
 
 **原廠映像不會被覆寫，也不會上傳到 GitHub。**
 
@@ -110,6 +110,6 @@ Linux x86_64 本機編譯指令見 [維護說明](docs/development.md)。回報�
 
 ## 授權與來源
 
-本專案自有 Python、workflow 與文件使用 MIT；Linux config 與 Linux/Next 衍生 patches 使用 GPL-2.0-only。上游核心、Next、工具鏈各自遵循原有授權，詳見 [NOTICE](NOTICE.md)。
+本專案自有 Python、workflow 與文件使用 MIT；內附的 Google avbtool 保留其 MIT 授權及來源紀錄；Linux config 與 Linux/Next 衍生 patches 使用 GPL-2.0-only。上游核心、Next、工具鏈各自遵循原有授權，詳見 [NOTICE](NOTICE.md)。
 
 來源：[Google stock kernel](https://android.googlesource.com/kernel/msm/+/7b0944645172)、[KernelSU Next](https://github.com/KernelSU-Next/KernelSU-Next)、[Next 非 GKI 指南](https://kernelsu-next.github.io/webpage/pages/how-to-integrate-for-non-gki.html)。

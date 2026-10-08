@@ -10,6 +10,7 @@ from pathlib import Path
 
 from common import (PROFILE_ID, boot_parts, compare_abi, cpio_entries, digest,
                     module_versions, profile, replace_kernel, symvers)
+from avb_boot import regenerate_footer
 
 
 def check_artifact(artifact: Path, p: dict) -> dict:
@@ -74,7 +75,7 @@ def pack(stock_dir: Path, artifact: Path, output: Path, p: dict) -> dict:
         raise ValueError("Stock boot partition size mismatch")
     count = check_vendor_modules(vendor_path.read_bytes(), symvers(artifact / "Module.symvers"), p)
     kernel = (artifact / "Image.lz4").read_bytes()
-    patched = replace_kernel(stock, kernel)
+    patched, avb_report = regenerate_footer(boot_path, replace_kernel(stock, kernel))
     new_kernel, new_ramdisk = boot_parts(patched)
     if new_kernel != kernel or new_ramdisk != boot_parts(stock)[1]:
         raise ValueError("Boot round-trip verification failed")
@@ -86,7 +87,7 @@ def pack(stock_dir: Path, artifact: Path, output: Path, p: dict) -> dict:
               "sha256": digest(target), "stock_boot_sha256": p["stock_boot_sha256"],
               "stock_module_count_checked": count, "ramdisk_preserved": True,
               "vendor_boot_preserved": True, "original_avb_metadata_removed": True,
-              "hardware_tested": info.get("hardware_tested", False)}
+              "hardware_tested": info.get("hardware_tested", False), **avb_report}
     (output / "packing-report.json").write_text(json.dumps(report, indent=2) + "\n")
     (output / "SHA256SUMS.txt").write_text(f"{report['sha256']}  {name}\n")
     return report

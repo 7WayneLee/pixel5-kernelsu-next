@@ -166,5 +166,6 @@ def replace_kernel(stock: bytes, kernel: bytes) -> bytes:
     if len(payload) > len(stock) - 4096:
         raise ValueError("Patched image exceeds the partition capacity")
     # The original AVB hash/signature is invalid after changing the kernel.
-    # Remove its metadata; this image is for an already-unlocked bootloader.
+    # Return an intermediate payload. The packer must regenerate and verify
+    # the AVB footer before exporting an image for an unlocked bootloader.
     return payload + bytes(len(stock) - len(payload))
