@@ -1,0 +1,78 @@
+name: Build Pixel 5 KernelSU Next
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Exact stock firmware profile
+        type: choice
+        required: true
+        default: redfin-up1a-231105-001-b2
+        options:
+          - redfin-up1a-231105-001-b2
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kernel-${{ github.ref }}-${{ inputs.profile }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 240
+    env:
+      BUILD_PROFILE: ${{ inputs.profile }}
+    steps:
+      - name: Check out project
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.11'
+      - name: Run tooling tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Prepare disposable hosted runner
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc
+          sudo apt-get update
+          sudo apt-get install -y bc bison flex git libssl-dev libelf-dev libtinfo5 lz4 cpio rsync kmod make build-essential zlib1g-dev
+          df -h .
+      - name: Fetch pinned Google sources
+        run: |
+          python3 tools/sync_sources.py --profile "$BUILD_PROFILE" \
+            --workspace "$RUNNER_TEMP/pixel5/sources" --jobs 4
+      - name: Build stock baseline and Next, then check module ABI
+        run: |
+          python3 tools/build.py --profile "$BUILD_PROFILE" \
+            --workspace "$RUNNER_TEMP/pixel5" --output "$GITHUB_WORKSPACE/artifacts" --jobs 2
+      - name: Summarize result
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          p = Path('artifacts/abi-report.json')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
+              out.write('## Pixel 5 kernel build\n\n')
+              if p.exists():
+                  result = json.loads(p.read_text())
+                  out.write(f"Module CRC comparison passed: **{result['compatible']}**\n\n")
+                  out.write(f"Changed: {len(result['changed'])}; removed: {len(result['removed'])}\n\n")
+              else:
+                  out.write('Build did not reach ABI verification. Read the build logs.\n\n')
+              out.write('Hardware boot/root validation has not been performed.\n')
+          PY
+      - name: Upload build artifacts and diagnostic logs
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: pixel5-${{ inputs.profile }}-${{ github.run_number }}
+          path: artifacts/
+          include-hidden-files: false
+          if-no-files-found: ignore
+          retention-days: 14
+          compression-level: 6

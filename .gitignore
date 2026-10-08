@@ -1,0 +1,9 @@
+.work/
+artifacts/
+dist/
+__pycache__/
+*.pyc
+*.img
+*.ko
+*.zip
+.DS_Store

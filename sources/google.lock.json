@@ -1,0 +1,177 @@
+{
+  "manifest_source": "https://android.googlesource.com/kernel/manifest",
+  "manifest_revision": "bbafff9bc6143fa280feaea1a32ea8f597bcd0da",
+  "projects": [
+    {
+      "path": "build",
+      "url": "https://android.googlesource.com/kernel/build",
+      "revision": "aa9e9a42c7b058c1d339c7a03f97683b21eb9e35",
+      "linkfiles": []
+    },
+    {
+      "path": "private/msm-google",
+      "url": "https://android.googlesource.com/kernel/msm",
+      "revision": "7b0944645172e8b690d42f68c8973ccb0ca45730",
+      "linkfiles": [
+        {
+          "dest": "build.config",
+          "src": "build.config.redbull.no-cfi"
+        },
+        {
+          "dest": "build_redbull-gki.sh",
+          "src": "build_redbull-gki.sh"
+        },
+        {
+          "dest": "build_redbull.sh",
+          "src": "build_redbull.sh"
+        },
+        {
+          "dest": "build_sm8250.sh",
+          "src": "build_sm8250.sh"
+        },
+        {
+          "dest": "build_sm7250.sh",
+          "src": "build_sm7250.sh"
+        }
+      ]
+    },
+    {
+      "path": "private/msm-google/arch/arm64/boot/dts/vendor",
+      "url": "https://android.googlesource.com/kernel/msm-extra/devicetree",
+      "revision": "afc98e2bb0716a57bf4f8d2b6191378dd7123ce4",
+      "linkfiles": []
+    },
+    {
+      "path": "private/msm-google/arch/arm64/boot/dts/vendor/qcom/camera",
+      "url": "https://android.googlesource.com/kernel/msm-extra/camera-devicetree",
+      "revision": "3d63f4795a04c39ed22a0eb110a808af64c14696",
+      "linkfiles": []
+    },
+    {
+      "path": "private/msm-google/arch/arm64/boot/dts/vendor/qcom/display",
+      "url": "https://android.googlesource.com/kernel/msm-extra/display-devicetree",
+      "revision": "43e15efe49673c877faa88046094bf1dd5389e3a",
+      "linkfiles": []
+    },
+    {
+      "path": "private/msm-google/techpack/audio",
+      "url": "https://android.googlesource.com/kernel/msm-extra",
+      "revision": "e867414fa42b483659dd56e5d4f0e6d4f1a5bb9d",
+      "linkfiles": []
+    },
+    {
+      "path": "private/msm-google/techpack/camera",
+      "url": "https://android.googlesource.com/kernel/msm-extra/camera-kernel",
+      "revision": "81d1b63026d15e91768527b862ff0becbf900663",
+      "linkfiles": []
+    },
+    {
+      "path": "private/msm-google/techpack/dataipa",
+      "url": "https://android.googlesource.com/kernel/msm-extra/dataipa",
+      "revision": "7063b704d5f99d7a8de5cedb490270b1ee8102c4",
+      "linkfiles": []
+    },
+    {
+      "path": "private/msm-google/techpack/display",
+      "url": "https://android.googlesource.com/kernel/msm-extra/display-drivers",
+      "revision": "ca74909cd98764454a2dacf784cda119c45a7f4c",
+      "linkfiles": []
+    },
+    {
+      "path": "private/msm-google/techpack/video",
+      "url": "https://android.googlesource.com/kernel/msm-extra/video-driver",
+      "revision": "44b578f70256623c159580af17452851fba976d8",
+      "linkfiles": []
+    },
+    {
+      "path": "private/msm-google-modules/data-kernel",
+      "url": "https://android.googlesource.com/kernel/msm-modules/data-kernel",
+      "revision": "4367e909c96c2022ea8d195bbbd42d268918dfe5",
+      "linkfiles": []
+    },
+    {
+      "path": "private/msm-google-modules/wlan/qca-wifi-host-cmn",
+      "url": "https://android.googlesource.com/kernel/msm-modules/qca-wfi-host-cmn",
+      "revision": "8de2c27c419e4a5d0ec6c540c020e0ad00fc1e33",
+      "linkfiles": []
+    },
+    {
+      "path": "private/msm-google-modules/wlan/qcacld-3.0",
+      "url": "https://android.googlesource.com/kernel/msm-modules/qcacld",
+      "revision": "a51b757fc7eef9e993a93e4d8748a02bc4027599",
+      "linkfiles": []
+    },
+    {
+      "path": "private/msm-google-modules/wlan/fw-api",
+      "url": "https://android.googlesource.com/kernel/msm-modules/wlan-fw-api",
+      "revision": "2659fc5bc818f6ea587921a7e36d57f7a7f34894",
+      "linkfiles": []
+    },
+    {
+      "path": "private/msm-google-modules/touch/fts",
+      "url": "https://android.googlesource.com/kernel/msm-modules/fts_touch",
+      "revision": "a43c04864f7693c3dd9849330fc4d388820270be",
+      "linkfiles": []
+    },
+    {
+      "path": "private/msm-google-modules/touch/sec",
+      "url": "https://android.googlesource.com/kernel/msm-modules/sec_touch",
+      "revision": "0701b191882dc408104ad8af9e2f5eb2bf34c297",
+      "linkfiles": []
+    },
+    {
+      "path": "prebuilts/gas/linux-x86",
+      "url": "https://android.googlesource.com/platform/prebuilts/gas/linux-x86",
+      "revision": "b2a189331333e014bfef4c0425b3ef4b74accdd0",
+      "linkfiles": []
+    },
+    {
+      "path": "prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9",
+      "url": "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9",
+      "revision": "961622e926a1b21382dba4dd9fe0e5fb3ee5ab7c",
+      "linkfiles": []
+    },
+    {
+      "path": "prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9",
+      "url": "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9",
+      "revision": "cb7b3ac1b7fdb49474ff68761909934d1142f594",
+      "linkfiles": []
+    },
+    {
+      "path": "prebuilts-master/clang/host/linux-x86",
+      "url": "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86",
+      "revision": "537e01a6ff78760ee5b69597efdbc47bc721058d",
+      "linkfiles": []
+    },
+    {
+      "path": "prebuilts-master/misc",
+      "url": "https://android.googlesource.com/platform/prebuilts/misc",
+      "revision": "15560bb32cdb9b47db48eb4865b736df9708a8fe",
+      "linkfiles": []
+    },
+    {
+      "path": "tools/mkbootimg",
+      "url": "https://android.googlesource.com/platform/system/tools/mkbootimg",
+      "revision": "34bc8bfb493401f7aadbd3b434f9fbfa521e9301",
+      "linkfiles": []
+    },
+    {
+      "path": "prebuilts/boot-artifacts",
+      "url": "https://android.googlesource.com/platform/prebuilts/boot-artifacts",
+      "revision": "9a4b503e0a93b68da75ccdc4f0d01d98a9415371",
+      "linkfiles": []
+    },
+    {
+      "path": "prebuilts/build-tools",
+      "url": "https://android.googlesource.com/platform/prebuilts/build-tools",
+      "revision": "cfedc16ec3deb680fca6fe2aff44a1837a97b50d",
+      "linkfiles": []
+    },
+    {
+      "path": "prebuilts/kernel-build-tools",
+      "url": "https://android.googlesource.com/kernel/prebuilts/build-tools",
+      "revision": "ca5b087f88c0302ff66f59a6f26be663e92baf15",
+      "linkfiles": []
+    }
+  ]
+}

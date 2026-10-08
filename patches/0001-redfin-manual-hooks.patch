@@ -1,0 +1,148 @@
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -1888,11 +1888,19 @@
+ 	return retval;
+ }
+ 
++#ifdef CONFIG_KSU
++extern int ksu_handle_execveat(int *fd, struct filename **filename_ptr,
++		void *argv, void *envp, int *flags);
++#endif
++
+ static int do_execveat_common(int fd, struct filename *filename,
+ 			      struct user_arg_ptr argv,
+ 			      struct user_arg_ptr envp,
+ 			      int flags)
+ {
++#ifdef CONFIG_KSU
++	ksu_handle_execveat(&fd, &filename, &argv, &envp, &flags);
++#endif
+ 	return __do_execve_file(fd, filename, argv, envp, flags, NULL);
+ }
+ 
+--- a/fs/open.c
++++ b/fs/open.c
+@@ -344,6 +344,11 @@
+  * We do this by temporarily clearing all FS-related capabilities and
+  * switching the fsuid/fsgid around to the real ones.
+  */
++#ifdef CONFIG_KSU
++extern int ksu_handle_faccessat(int *dfd, const char __user **filename,
++		int *mode, int *flags);
++#endif
++
+ long do_faccessat(int dfd, const char __user *filename, int mode)
+ {
+ 	const struct cred *old_cred;
+@@ -353,6 +358,9 @@
+ 	int res;
+ 	unsigned int lookup_flags = LOOKUP_FOLLOW;
+ 
++#ifdef CONFIG_KSU
++	ksu_handle_faccessat(&dfd, &filename, &mode, NULL);
++#endif
+ 	if (mode & ~S_IRWXO)	/* where's F_OK, X_OK, W_OK, R_OK? */
+ 		return -EINVAL;
+ 
+--- a/fs/read_write.c
++++ b/fs/read_write.c
+@@ -586,8 +586,15 @@
+ 	return ret;
+ }
+ 
++#ifdef CONFIG_KSU
++extern void ksu_handle_sys_read(unsigned int fd);
++#endif
++
+ SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf, size_t, count)
+ {
++#ifdef CONFIG_KSU
++	ksu_handle_sys_read(fd);
++#endif
+ 	return ksys_read(fd, buf, count);
+ }
+ 
+--- a/fs/stat.c
++++ b/fs/stat.c
+@@ -353,6 +353,12 @@
+ 	return cp_new_stat(&stat, statbuf);
+ }
+ 
++#ifdef CONFIG_KSU
++extern int ksu_handle_stat(int *dfd, const char __user **filename, int *flags);
++extern void ksu_handle_newfstat_ret(unsigned int *fd,
++		struct stat __user **statbuf);
++#endif
++
+ #if !defined(__ARCH_WANT_STAT64) || defined(__ARCH_WANT_SYS_NEWFSTATAT)
+ SYSCALL_DEFINE4(newfstatat, int, dfd, const char __user *, filename,
+ 		struct stat __user *, statbuf, int, flag)
+@@ -360,6 +366,9 @@
+ 	struct kstat stat;
+ 	int error;
+ 
++#ifdef CONFIG_KSU
++	ksu_handle_stat(&dfd, &filename, &flag);
++#endif
+ 	error = vfs_fstatat(dfd, filename, &stat, flag);
+ 	if (error)
+ 		return error;
+@@ -374,6 +383,10 @@
+ 
+ 	if (!error)
+ 		error = cp_new_stat(&stat, statbuf);
++#ifdef CONFIG_KSU
++	if (!error)
++		ksu_handle_newfstat_ret(&fd, &statbuf);
++#endif
+ 
+ 	return error;
+ }
+--- a/kernel/reboot.c
++++ b/kernel/reboot.c
+@@ -305,6 +305,11 @@
+  *
+  * reboot doesn't sync: do that yourself before calling this.
+  */
++#ifdef CONFIG_KSU
++extern int ksu_handle_sys_reboot(int magic1, int magic2, unsigned int cmd,
++		void __user **arg);
++#endif
++
+ SYSCALL_DEFINE4(reboot, int, magic1, int, magic2, unsigned int, cmd,
+ 		void __user *, arg)
+ {
+@@ -312,6 +317,9 @@
+ 	char buffer[256];
+ 	int ret = 0;
+ 
++#ifdef CONFIG_KSU
++	ksu_handle_sys_reboot(magic1, magic2, cmd, &arg);
++#endif
+ 	/* We only trust the superuser with rebooting the system. */
+ 	if (!ns_capable(pid_ns->user_ns, CAP_SYS_BOOT))
+ 		return -EPERM;
+--- a/drivers/input/input.c
++++ b/drivers/input/input.c
+@@ -378,10 +378,20 @@
+ 	return disposition;
+ }
+ 
++#ifdef CONFIG_KSU
++extern int ksu_handle_input_handle_event(unsigned int *type,
++		unsigned int *code, int *value);
++#endif
++
+ static void input_handle_event(struct input_dev *dev,
+ 			       unsigned int type, unsigned int code, int value)
+ {
+-	int disposition = input_get_disposition(dev, type, code, &value);
++	int disposition;
++
++#ifdef CONFIG_KSU
++	ksu_handle_input_handle_event(&type, &code, &value);
++#endif
++	disposition = input_get_disposition(dev, type, code, &value);
+ 
+ 	if (disposition != INPUT_IGNORE_EVENT && type != EV_SYN)
+ 		add_input_randomness(type, code, value);

@@ -1,0 +1,2 @@
+# Patch context intentionally preserves upstream indentation and empty lines.
+patches/*.patch -whitespace

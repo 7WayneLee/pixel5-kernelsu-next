@@ -1,0 +1,20 @@
+{
+  "id": "redfin-up1a-231105-001-b2",
+  "device": "redfin",
+  "model": "Pixel 5",
+  "firmware": "UP1A.231105.001.B2",
+  "fingerprint": "google/redfin/redfin:14/UP1A.231105.001.B2/11260668:user/release-keys",
+  "kernel_release": "4.19.278-g7b0944645172-ab10812814",
+  "scmversion": "-g7b0944645172-ab10812814",
+  "kernel_revision": "7b0944645172e8b690d42f68c8973ccb0ca45730",
+  "next_revision": "8869bd768d6650198810f2395c2762fabefc8557",
+  "next_version": 33306,
+  "next_version_tag": "v3.4.0-legacy-pixel5",
+  "next_manager_release": "v3.4.0",
+  "config": "configs/redfin-stock.config",
+  "source_lock": "sources/google.lock.json",
+  "stock_boot_sha256": "e2ce2f175d3443218c2d2a01906719931ad97ec839df8181df47ea780d96f6ea",
+  "stock_vendor_boot_sha256": "349965b1621e586be4357eccc53ae99750358e2f7257ad9ad5642ea29959381a",
+  "boot_partition_size": 100663296,
+  "hardware_validation": "not-tested"
+}
