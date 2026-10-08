@@ -1,0 +1,29 @@
+diff --git a/kernel/sys.c b/kernel/sys.c
+index 909045d..359cb8a 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -2410,6 +2410,10 @@ static int prctl_set_vma(unsigned long opt, unsigned long start,
+ }
+ #endif
+ 
++#ifdef CONFIG_KSU_SUSFS
++extern long ksu_susfs_prctl(unsigned long cmd, unsigned long arg, unsigned long result);
++#endif
++
+ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+ 		unsigned long, arg4, unsigned long, arg5)
+ {
+@@ -2420,6 +2424,13 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+ 	error = security_task_prctl(option, arg2, arg3, arg4, arg5);
+ 	if (error != -ENOSYS)
+ 		return error;
++#ifdef CONFIG_KSU_SUSFS
++	if ((u32)option == 0xDEADBEEF) {
++		error = ksu_susfs_prctl(arg2, arg3, arg5);
++		if (error != -ENOSYS)
++			return error;
++	}
++#endif
+ 
+ 	error = 0;
+ 	switch (option) {

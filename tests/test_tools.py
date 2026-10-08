@@ -1,6 +1,7 @@
 """Checks for image corruption, profile mistakes and incompatible module CRCs."""
 import hashlib
 import json
+import shutil
 import struct
 import sys
 import tempfile
@@ -13,6 +14,7 @@ from common import (ROOT, boot_parts, compare_abi, config_values, cpio_entries,
                     digest, module_versions, profile, replace_kernel, symvers)
 from pack_boot import check_artifact, pack
 from avb_boot import TEST_KEY, read_metadata, regenerate_footer, run_avb
+from susfs import sources as susfs_sources
 
 
 def boot_image(kernel=b"old", ramdisk=b"original-ramdisk"):
@@ -197,6 +199,27 @@ class AvbTests(unittest.TestCase):
 
 
 class ProfileTests(unittest.TestCase):
+    def test_susfs_source_corruption_is_rejected(self):
+        p = profile("redfin-up1a-231105-001-b2-susfs")
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "sources").mkdir()
+            shutil.copyfile(ROOT / p["susfs"]["source_lock"], root / p["susfs"]["source_lock"])
+            shutil.copytree(ROOT / "patches/susfs-4.19", root / "patches/susfs-4.19")
+            source = root / "patches/susfs-4.19/kernel_patches/fs/susfs.c"
+            source.write_text(source.read_text() + "\n/* corrupted */\n")
+            with patch("susfs.ROOT", root), self.assertRaisesRegex(ValueError, "checksum mismatch"):
+                susfs_sources(p)
+
+    def test_susfs_artifact_cannot_omit_control_tool(self):
+        p = profile("redfin-up1a-231105-001-b2-susfs")
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            info = {"schema_version": 1, "profile": p, "files": {}}
+            (root / "build-info.json").write_text(json.dumps(info))
+            with self.assertRaisesRegex(ValueError, "manifest"):
+                check_artifact(root, p)
+
     def test_profile_rejects_path_traversal(self):
         with self.assertRaises(ValueError):
             profile("../../unrelated")

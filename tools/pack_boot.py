@@ -8,7 +8,7 @@ import struct
 import subprocess
 from pathlib import Path
 
-from common import (PROFILE_ID, boot_parts, compare_abi, cpio_entries, digest,
+from common import (PROFILE_ID, artifact_file_names, boot_parts, compare_abi, cpio_entries, digest,
                     module_versions, profile, replace_kernel, symvers)
 from avb_boot import regenerate_footer
 
@@ -17,8 +17,7 @@ def check_artifact(artifact: Path, p: dict) -> dict:
     info = json.loads((artifact / "build-info.json").read_text())
     if info.get("schema_version") != 1 or info.get("profile") != p:
         raise ValueError("Artifact was built for a different profile")
-    required = {"Image.lz4", "Module.symvers", "baseline.Module.symvers",
-                "kernel.config", "baseline.config", "System.map", "abi-report.json"}
+    required = set(artifact_file_names(p))
     if set(info.get("files", {})) != required:
         raise ValueError("Artifact file manifest is incomplete or unexpected")
     for name, expected in info["files"].items():

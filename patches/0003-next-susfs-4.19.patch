@@ -1,0 +1,496 @@
+diff --git a/kernel/Kbuild b/kernel/Kbuild
+index baa32a37..82b56fc6 100644
+--- a/kernel/Kbuild
++++ b/kernel/Kbuild
+@@ -1,4 +1,7 @@
+ kernelsu-objs := core/init.o
++ifeq ($(CONFIG_KSU_SUSFS),y)
++kernelsu-objs += feature/susfs_bridge.o
++endif
+ 
+ kernelsu-objs += compat/kernel_compat.o
+ kernelsu-objs += feature/kernel_umount.o
+diff --git a/kernel/Kconfig b/kernel/Kconfig
+index 946966dc..cef94bac 100644
+--- a/kernel/Kconfig
++++ b/kernel/Kconfig
+@@ -73,3 +73,136 @@ config KSU_SYSCALL_TABLE_HOOK
+ endchoice
+ 
+ endmenu
++
++menu "KernelSU - SUSFS"
++config KSU_SUSFS
++    bool "KernelSU addon - SUSFS"
++    depends on KSU
++    default n
++    help
++      Patch and Enable SUSFS to kernel with KernelSU.
++
++config KSU_SUSFS_HAS_MAGIC_MOUNT
++    bool "Say yes if the current KernelSU repo has magic mount implemented (default n)"
++    depends on KSU_SUSFS
++    default n
++    help
++      - Enable to indicate that the current SUSFS kernel supports the auto hide features for 5ec1cff's Magic Mount KernelSU
++      - Every mounts from /debug_ramdisk/workdir will be treated as magic mount and processed differently by susfs
++
++config KSU_SUSFS_SUS_PATH
++    bool "Enable to hide suspicious path (NOT recommended)"
++    depends on KSU_SUSFS
++    default y
++    help
++      - Allow hiding the user-defined path and all its sub-paths from various system calls.
++      - tmpfs filesystem is not allowed to be added. 
++      - Effective only on zygote spawned user app process.
++      - Use with cautious as it may cause performance loss and will be vulnerable to side channel attacks,
++        just disable this feature if it doesn't work for you or you don't need it at all.
++
++config KSU_SUSFS_SUS_MOUNT
++    bool "Enable to hide suspicious mounts"
++    depends on KSU_SUSFS
++    default y
++    help
++      - Allow hiding the user-defined mount paths from /proc/self/[mounts|mountinfo|mountstat].
++      - Effective on all processes for hiding mount entries.
++      - Mounts mounted by process with ksu domain will be forced to be assigned the dev name "KSU".
++      - mnt_id and mnt_group_id of the sus mount will be assigned to a much bigger number to solve the issue of id not being contiguous.  
++
++config KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT
++    bool "Enable to hide KSU's default mounts automatically (experimental)"
++    depends on KSU_SUSFS_SUS_MOUNT
++    default y
++    help
++      - Automatically add KSU's default mounts to sus_mount.
++      - No susfs command is needed in userspace.
++      - Only mount operation from process with ksu domain will be checked.
++
++config KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT
++    bool "Enable to hide suspicious bind mounts automatically (experimental)"
++    depends on KSU_SUSFS_SUS_MOUNT
++    default y
++    help
++      - Automatically add binded mounts to sus_mount.
++      - No susfs command is needed in userspace.
++      - Only mount operation from process with ksu domain will be checked.
++
++config KSU_SUSFS_SUS_KSTAT
++    bool "Enable to spoof suspicious kstat"
++    depends on KSU_SUSFS
++    default y
++    help
++      - Allow spoofing the kstat of user-defined file/directory.
++      - Effective only on zygote spawned user app process.
++
++config KSU_SUSFS_SUS_OVERLAYFS
++    bool "Enable to automatically spoof kstat and kstatfs for overlayed files/directories"
++    depends on KSU_SUSFS && OVERLAY_FS
++    default n
++    help
++      - Automatically spoof the kstat and kstatfs for overlayed files/directories.
++      - Enable it if you are using legacy KernelSU and dont have auto hide features enabled.
++      - No susfs command is needed in userspace.
++      - Effective on all processes.
++
++config KSU_SUSFS_TRY_UMOUNT
++    bool "Enable to use ksu's ksu_try_umount"
++    depends on KSU_SUSFS
++    default y
++    help
++      - Allow using ksu_try_umount to umount other user-defined mount paths prior to ksu's default umount paths.
++      - Effective on all NO-root-access-granted processes.
++
++config KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
++    bool "Enable to add bind mounts to ksu's ksu_try_umount automatically (experimental)"
++    depends on KSU_SUSFS_TRY_UMOUNT
++    default y
++    help
++      - Automatically add binded mounts to ksu's ksu_try_umount.
++      - No susfs command is needed in userspace.
++      - Only mount operation from process with ksu domain will be checked.
++
++config KSU_SUSFS_SPOOF_UNAME
++    bool "Enable to spoof uname"
++    depends on KSU_SUSFS
++    default y
++    help
++      - Allow spoofing the string returned by uname syscall to user-defined string.
++      - Effective on all processes.
++      
++config KSU_SUSFS_ENABLE_LOG
++    bool "Enable logging susfs log to kernel"
++    depends on KSU_SUSFS
++    default y
++    help
++      - Allow logging susfs log to kernel, uncheck it to completely disable all susfs log.
++
++config KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS
++    bool "Enable to automatically hide ksu and susfs symbols from /proc/kallsyms"
++    depends on KSU_SUSFS
++    default y
++    help
++      - Automatically hide ksu and susfs symbols from '/proc/kallsyms'.
++      - Effective on all processes.
++
++config KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG
++    bool "Enable to spoof /proc/bootconfig (gki) or /proc/cmdline (non-gki)"
++    depends on KSU_SUSFS
++    default y
++    help
++      - Spoof the output of /proc/bootconfig (gki) or /proc/cmdline (non-gki) with a user-defined file.
++      - Effective on all processes.
++
++config KSU_SUSFS_OPEN_REDIRECT
++    bool "Enable to redirect a path to be opened with another path (experimental)"
++    depends on KSU_SUSFS
++    default y
++    help
++      - Allow redirecting a target path to be opened with another user-defined path.
++      - Effective only on processes with uid < 2000.
++      - Please be reminded that process with open access to the target and redirected path can be detected.
++
++endmenu
++
+diff --git a/kernel/core/init.c b/kernel/core/init.c
+index 08f5ffb4..2d65e515 100644
+--- a/kernel/core/init.c
++++ b/kernel/core/init.c
+@@ -99,8 +99,15 @@ bool ksu_bundled = false;
+ module_param_named(bundled, ksu_bundled, bool, 0);
+ #endif
+ 
++#ifdef CONFIG_KSU_SUSFS
++#include <linux/susfs.h>
++#endif
++
+ int __init kernelsu_init(void)
+ {
++#ifdef CONFIG_KSU_SUSFS
++	susfs_init();
++#endif
+ #ifdef KSU_MANAGER_PACKAGE
+ 	pr_info("welcome to KernelSU version " __stringify(KERNEL_SU_VERSION) ", package name " KSU_MANAGER_PACKAGE "\n");
+ #else
+diff --git a/kernel/feature/kernel_umount.c b/kernel/feature/kernel_umount.c
+index 275dde8d..8f841fa9 100644
+--- a/kernel/feature/kernel_umount.c
++++ b/kernel/feature/kernel_umount.c
+@@ -95,6 +95,29 @@ static void try_umount(const char *mnt, int flags)
+     ksu_umount_mnt(mnt, &path, flags);
+ }
+ 
++#ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
++#include <linux/susfs.h>
++extern bool susfs_is_mnt_devname_ksu(struct path *path);
++
++void ksu_try_umount(const char *mnt, bool check_mnt, int flags, uid_t uid)
++{
++    struct path path;
++    if (kern_path(mnt, 0, &path))
++        return;
++    if (path.dentry != path.mnt->mnt_root ||
++        (check_mnt && !susfs_is_mnt_devname_ksu(&path))) {
++        path_put(&path);
++        return;
++    }
++    ksu_umount_mnt(mnt, &path, flags);
++}
++
++void susfs_try_umount_all(uid_t uid)
++{
++    susfs_try_umount(uid);
++}
++#endif
++
+ struct umount_tw {
+ 	struct callback_head cb;
+ };
+@@ -105,6 +128,9 @@ static void umount_tw_func(struct callback_head *cb)
+ 	const struct cred *saved = override_creds(ksu_cred);
+ 
+     struct mount_entry *entry;
++#ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
++    susfs_try_umount_all(current_uid().val);
++#endif
+     down_read(&mount_list_lock);
+     list_for_each_entry(entry, &mount_list, list) {
+         pr_info("%s: unmounting: %s flags: 0x%x\n", __func__, entry->umountable, entry->flags);
+@@ -122,9 +148,11 @@ int ksu_handle_umount(uid_t old_uid, uid_t new_uid)
+ 	struct umount_tw *tw;
+ 
+ 	// if there isn't any module mounted, just ignore it!
++	#ifndef CONFIG_KSU_SUSFS_TRY_UMOUNT
+ 	if (!ksu_module_mounted) {
+ 		return 0;
+ 	}
++#endif
+ 
+ 	if (!ksu_kernel_umount_enabled) {
+ 		return 0;
+diff --git a/kernel/feature/susfs_bridge.c b/kernel/feature/susfs_bridge.c
+new file mode 100644
+index 00000000..4034282a
+--- /dev/null
++++ b/kernel/feature/susfs_bridge.c
+@@ -0,0 +1,186 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/* Pixel 5 adapter for the pinned SUSFS 1.5.5 NON-GKI command ABI.
++ * This is a root-only control interface, not a legacy KernelSU root API.
++ */
++#include <linux/cred.h>
++#include <linux/errno.h>
++#include <linux/namei.h>
++#include <linux/nsproxy.h>
++#include <linux/sched/task.h>
++#include <linux/susfs.h>
++#include <linux/uaccess.h>
++#include "selinux/selinux.h"
++
++extern void susfs_run_try_umount_for_current_mnt_ns(void);
++
++static u64 susfs_features(void)
++{
++    u64 mask = 0;
++#ifdef CONFIG_KSU_SUSFS_SUS_PATH
++    mask |= BIT_ULL(0);
++#endif
++#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
++    mask |= BIT_ULL(1);
++#endif
++#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT
++    mask |= BIT_ULL(2);
++#endif
++#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT
++    mask |= BIT_ULL(3);
++#endif
++#ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
++    mask |= BIT_ULL(4);
++#endif
++#ifdef CONFIG_KSU_SUSFS_SUS_OVERLAYFS
++    mask |= BIT_ULL(5);
++#endif
++#ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
++    mask |= BIT_ULL(6);
++#endif
++#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
++    mask |= BIT_ULL(7);
++#endif
++#ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME
++    mask |= BIT_ULL(8);
++#endif
++#ifdef CONFIG_KSU_SUSFS_ENABLE_LOG
++    mask |= BIT_ULL(9);
++#endif
++#ifdef CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS
++    mask |= BIT_ULL(10);
++#endif
++#ifdef CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG
++    mask |= BIT_ULL(11);
++#endif
++#ifdef CONFIG_KSU_SUSFS_OPEN_REDIRECT
++    mask |= BIT_ULL(12);
++#endif
++#ifdef CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT
++    mask |= BIT_ULL(14);
++#endif
++    return mask;
++}
++
++long ksu_susfs_prctl(unsigned long cmd, unsigned long arg, unsigned long result)
++{
++    void __user *payload = (void __user *)arg;
++    int __user *status = (int __user *)result;
++    int error = -EOPNOTSUPP;
++    u64 features;
++
++    /* Do not turn a public magic number into an authorization mechanism. */
++    if (!uid_eq(current_uid(), GLOBAL_ROOT_UID) ||
++        !uid_eq(current_euid(), GLOBAL_ROOT_UID) || !is_ksu_domain())
++        return -ENOSYS;
++
++    /* Validate the reply pointer before performing a mutating operation. */
++    if (put_user(error, status))
++        return -EFAULT;
++
++    switch (cmd) {
++#ifdef CONFIG_KSU_SUSFS_SUS_PATH
++    case CMD_SUSFS_ADD_SUS_PATH:
++        error = susfs_add_sus_path(payload);
++        break;
++#endif
++#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
++    case CMD_SUSFS_ADD_SUS_MOUNT:
++        error = susfs_add_sus_mount(payload);
++        break;
++#endif
++#ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
++    case CMD_SUSFS_ADD_SUS_KSTAT:
++    case CMD_SUSFS_ADD_SUS_KSTAT_STATICALLY:
++        error = susfs_add_sus_kstat(payload);
++        break;
++    case CMD_SUSFS_UPDATE_SUS_KSTAT:
++        error = susfs_update_sus_kstat(payload);
++        break;
++#endif
++#ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
++    case CMD_SUSFS_ADD_TRY_UMOUNT:
++        error = susfs_add_try_umount(payload);
++        break;
++    case CMD_SUSFS_RUN_UMOUNT_FOR_CURRENT_MNT_NS:
++        /* Refuse to unmount Android's global mount namespace. */
++        if (current->nsproxy->mnt_ns == init_task.nsproxy->mnt_ns)
++            error = -EPERM;
++        else {
++            susfs_run_try_umount_for_current_mnt_ns();
++            error = 0;
++        }
++        break;
++#endif
++#ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME
++    case CMD_SUSFS_SET_UNAME:
++        error = susfs_set_uname(payload);
++        break;
++#endif
++#ifdef CONFIG_KSU_SUSFS_ENABLE_LOG
++    case CMD_SUSFS_ENABLE_LOG:
++        if (arg > 1)
++            error = -EINVAL;
++        else {
++            susfs_set_log(arg != 0);
++            error = 0;
++        }
++        break;
++#endif
++#ifdef CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG
++    case CMD_SUSFS_SET_CMDLINE_OR_BOOTCONFIG:
++        error = susfs_set_cmdline_or_bootconfig(payload);
++        break;
++#endif
++#ifdef CONFIG_KSU_SUSFS_OPEN_REDIRECT
++    case CMD_SUSFS_ADD_OPEN_REDIRECT:
++        error = susfs_add_open_redirect(payload);
++        break;
++#endif
++    case CMD_SUSFS_SHOW_VERSION:
++        error = copy_to_user(payload, SUSFS_VERSION, sizeof(SUSFS_VERSION)) ? -EFAULT : 0;
++        break;
++    case CMD_SUSFS_SHOW_ENABLED_FEATURES:
++        features = susfs_features();
++        error = copy_to_user(payload, &features, sizeof(features)) ? -EFAULT : 0;
++        break;
++    case CMD_SUSFS_SHOW_VARIANT:
++        error = copy_to_user(payload, SUSFS_VARIANT, sizeof(SUSFS_VARIANT)) ? -EFAULT : 0;
++        break;
++    case CMD_SUSFS_SHOW_SUS_SU_WORKING_MODE:
++    case CMD_SUSFS_IS_SUS_SU_READY:
++    case CMD_SUSFS_SUS_SU:
++        /* SUS_SU is not supported by this NON-GKI integration. */
++        break;
++    default:
++        return -ENOSYS;
++    }
++    return put_user(error, status) ? -EFAULT : 0;
++}
++
++static bool marker_exists(const char *name)
++{
++    struct path path;
++    if (kern_path(name, LOOKUP_FOLLOW, &path))
++        return false;
++    path_put(&path);
++    return true;
++}
++
++void ksu_susfs_post_fs_data(void)
++{
++#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT
++    extern bool susfs_is_auto_add_sus_bind_mount_enabled;
++    if (marker_exists(DATA_ADB_NO_AUTO_ADD_SUS_BIND_MOUNT))
++        susfs_is_auto_add_sus_bind_mount_enabled = false;
++#endif
++#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT
++    extern bool susfs_is_auto_add_sus_ksu_default_mount_enabled;
++    if (marker_exists(DATA_ADB_NO_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT))
++        susfs_is_auto_add_sus_ksu_default_mount_enabled = false;
++#endif
++#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
++    extern bool susfs_is_auto_add_try_umount_for_bind_mount_enabled;
++    if (marker_exists(DATA_ADB_NO_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT))
++        susfs_is_auto_add_try_umount_for_bind_mount_enabled = false;
++#endif
++}
+diff --git a/kernel/hook/setuid_hook.c b/kernel/hook/setuid_hook.c
+index 510057ff..f006ca76 100644
+--- a/kernel/hook/setuid_hook.c
++++ b/kernel/hook/setuid_hook.c
+@@ -24,8 +24,25 @@
+ #include "feature/kernel_umount.h"
+ #include "compat/kernel_compat.h"
+ 
++#ifdef CONFIG_KSU_SUSFS
++#include <linux/susfs_def.h>
++#include "selinux/selinux.h"
++#endif
++
+ int ksu_handle_setresuid(uid_t old_uid, uid_t new_uid)
+ {
++#ifdef CONFIG_KSU_SUSFS
++    if (is_zygote(current_cred())) {
++        bool protected_app = (is_appuid(new_uid) || is_isolated_process(new_uid)) &&
++            !is_uid_manager(new_uid) && !ksu_is_allow_uid(new_uid);
++        task_lock(current);
++        if (protected_app)
++            current->susfs_task_state |= TASK_STRUCT_NON_ROOT_USER_APP_PROC;
++        else
++            current->susfs_task_state &= ~TASK_STRUCT_NON_ROOT_USER_APP_PROC;
++        task_unlock(current);
++    }
++#endif
+     // we rely on the fact that zygote always call setresuid(3) with same uids
+ 
+     pr_info("handle_setresuid from %d to %d\n", old_uid, new_uid);
+diff --git a/kernel/runtime/boot_event.c b/kernel/runtime/boot_event.c
+index ee7c88a2..505d44b8 100644
+--- a/kernel/runtime/boot_event.c
++++ b/kernel/runtime/boot_event.c
+@@ -54,6 +54,10 @@ void ksu_recheck_ksud(void)
+ 
+ extern void ksu_avc_spoof_late_init();
+ 
++#ifdef CONFIG_KSU_SUSFS
++extern void ksu_susfs_post_fs_data(void);
++#endif
++
+ void on_post_fs_data(void)
+ {
+ 	static bool done = false;
+@@ -72,6 +76,9 @@ void on_post_fs_data(void)
+ 	// sanity check, this may influence the performance
+ 	ksu_stop_input_hook_runtime();
+ 	ksu_selinux_hide_handle_post_fs_data();
++#ifdef CONFIG_KSU_SUSFS
++	ksu_susfs_post_fs_data();
++#endif
+ }
+ 
+ extern void ext4_unregister_sysfs(struct super_block *sb);
+diff --git a/kernel/selinux/selinux.c b/kernel/selinux/selinux.c
+index 36f1677f..6c92c57b 100644
+--- a/kernel/selinux/selinux.c
++++ b/kernel/selinux/selinux.c
+@@ -270,3 +270,15 @@ void escape_to_root_for_adb_root(void)
+     }
+     commit_creds(cred);
+ }
++
++#ifdef CONFIG_KSU_SUSFS
++bool susfs_is_current_ksu_domain(void)
++{
++    return is_ksu_domain();
++}
++
++bool susfs_is_current_zygote_domain(void)
++{
++    return is_zygote(current_cred());
++}
++#endif

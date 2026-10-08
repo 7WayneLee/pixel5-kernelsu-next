@@ -9,7 +9,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from common import ROOT, PROFILE_ID, compare_abi, config_values, digest, profile, symvers
+from common import (ROOT, PROFILE_ID, artifact_file_names, compare_abi,
+                    config_values, digest, profile, symvers)
 
 
 def run(args, cwd=None, env=None, log=None):
@@ -51,12 +52,18 @@ def integrate(kernel: Path, p: dict):
         stream.write("\nobj-$(CONFIG_KSU) += kernelsu/\n")
     with (kernel / "drivers/Kconfig").open("a") as stream:
         stream.write('\nsource "drivers/kernelsu/Kconfig"\n')
+    if "susfs" in p:
+        from susfs import integrate as integrate_susfs
+        integrate_susfs(kernel, next_root, p, run)
 
 
 def build(workspace: Path, output: Path, p: dict, jobs: int):
     if platform.system() != "Linux" or platform.machine() != "x86_64":
         raise ValueError("Kernel compilation requires Linux x86_64; use GitHub Actions")
     output.mkdir(parents=True, exist_ok=False)
+    if "susfs" in p:
+        from susfs import build_tool
+        build_tool(p, output, run)
     sources = workspace / "sources"
     kernel = sources / "private/msm-google"
     lock = json.loads((ROOT / p["source_lock"]).read_text())
@@ -96,12 +103,20 @@ FILES="arch/arm64/boot/Image.lz4 vmlinux System.map .config Module.symvers"
     integrate(kernel, p)
     with (kernel / "arch/arm64/configs/pixel5_ci_defconfig").open("a") as stream:
         stream.write("\nCONFIG_KSU=y\nCONFIG_KSU_MANUAL_HOOK=y\n# CONFIG_KSU_KPROBES_HOOK is not set\n# CONFIG_KSU_SYSCALL_TABLE_HOOK is not set\n")
+        if "susfs" in p:
+            from susfs import config
+            stream.write(config(p))
     run(command + [f"KSU_VERSION_OVERRIDE={p['next_version']}",
                    f"KSU_VERSION_TAG_OVERRIDE={p['next_version_tag']}"],
         sources, env, output / "next-build.log")
     actual_config = config_values(dist / ".config")
     if actual_config.get("CONFIG_KSU") != "y" or actual_config.get("CONFIG_KSU_MANUAL_HOOK") != "y":
         raise ValueError("Next did not remain built-in with manual hooks")
+    if "susfs" in p:
+        from susfs import config
+        expected_susfs = config_values(ROOT / p["susfs"]["config"])
+        if any(actual_config.get(key, "n") != value for key, value in expected_susfs.items()):
+            raise ValueError("SUSFS features differ from the pinned profile")
     drift = {key: [value, actual_config.get(key)] for key, value in stock_config.items()
              if not key.startswith("CONFIG_KSU") and actual_config.get(key) != value}
     if drift:
@@ -121,8 +136,7 @@ FILES="arch/arm64/boot/Image.lz4 vmlinux System.map .config Module.symvers"
         raise ValueError(f"Kernel release differs from stock modules: {release}")
     metadata = {"schema_version": 1, "profile": p, "kernel_release": release,
                 "abi_compatible": abi["compatible"], "hardware_tested": False,
-                "files": {name: digest(output / name) for name in
-                          ("Image.lz4", "Module.symvers", "baseline.Module.symvers", "kernel.config", "baseline.config", "System.map", "abi-report.json")}}
+                "files": {name: digest(output / name) for name in artifact_file_names(p)}}
     (output / "build-info.json").write_text(json.dumps(metadata, indent=2) + "\n")
     shutil.copyfile(ROOT / p["source_lock"], output / "source-lock.json")
     checksum = "".join(f"{digest(f)}  {f.name}\n" for f in sorted(output.iterdir()) if f.is_file())

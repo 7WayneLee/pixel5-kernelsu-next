@@ -15,6 +15,7 @@
 | KernelSU Next | `v3.4.0-legacy-pixel5` · 33306 · UAPI 5 |
 | 管理器 | [v3.4.0-29-g3daa5787](https://github.com/KernelSU-Next/KernelSU-Next/actions/runs/37513294225) · 33323 · UAPI 5 |
 | 整合方式 | Built-in、manual hooks；保留原廠 CFI/LTO/MODVERSIONS |
+| 選用 SUSFS | v1.5.5 NON-GKI／kernel-4.19；獨立實驗 profile |
 | Bootloader | 已解鎖 |
 | 驗證狀態 | 已在一部裝置驗證開機與 ADB root，完整硬體測試待完成（[紀錄](docs/validation.md)） |
 
@@ -26,8 +27,10 @@
 
 1. Fork 此儲存庫，並在自己的 Fork 啟用 **Actions**。
 2. 開啟 **Actions → Build Pixel 5 KernelSU Next → Run workflow**。
-3. 選擇 `redfin-up1a-231105-001-b2`，開始執行。
+3. 選擇已驗證的 `redfin-up1a-231105-001-b2`，或實驗版 `redfin-up1a-231105-001-b2-susfs`，開始執行。
 4. 等待核心編譯與 ABI 檢查成功。
 5. 開啟成功的 run，在 **Artifacts** 下載 `pixel5-redfin-up1a-231105-001-b2-<run_number>`。
 
 產物包含 `Image.lz4`、ABI 報告、建置資訊與記錄檔。失敗 run 的產物僅供診斷。
+
+SUSFS 產物另含 `ksu_susfs_arm64` 與來源 lock。必須使用已整合 SUSFS 的核心，單獨安裝模組無法啟用。此 profile 停用 SUS_SU 與自動 overlayfs 偽裝；不能保證所有 App 都接受 root 或已解鎖裝置。

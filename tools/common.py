@@ -28,7 +28,19 @@ def profile(name: str = PROFILE_ID) -> dict:
     for key in ("kernel_revision", "next_revision"):
         if not re.fullmatch(r"[0-9a-f]{40}", p[key]):
             raise ValueError(f"{key} must be an immutable commit")
+    if "susfs" in p:
+        from susfs import sources, config
+        sources(p)
+        config(p)
     return p
+
+
+def artifact_file_names(p: dict) -> tuple[str, ...]:
+    names = ("Image.lz4", "Module.symvers", "baseline.Module.symvers", "kernel.config",
+             "baseline.config", "System.map", "abi-report.json")
+    if "susfs" in p:
+        names += ("ksu_susfs_arm64", "susfs-source-lock.json")
+    return names
 
 
 def symvers(path: Path) -> dict[str, str]:

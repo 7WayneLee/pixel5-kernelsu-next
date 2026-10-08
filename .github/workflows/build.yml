@@ -10,6 +10,7 @@ on:
         default: redfin-up1a-231105-001-b2
         options:
           - redfin-up1a-231105-001-b2
+          - redfin-up1a-231105-001-b2-susfs
 
 permissions:
   contents: read
@@ -39,7 +40,7 @@ jobs:
         run: |
           sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc
           sudo apt-get update
-          sudo apt-get install -y bc bison flex git libssl-dev libelf-dev libtinfo5 lz4 cpio rsync kmod make build-essential zlib1g-dev
+          sudo apt-get install -y bc bison flex git libssl-dev libelf-dev libtinfo5 lz4 cpio rsync kmod make build-essential zlib1g-dev gcc-aarch64-linux-gnu
           df -h .
       - name: Fetch pinned Google sources
         run: |

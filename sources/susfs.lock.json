@@ -1,0 +1,17 @@
+{
+  "repository": "https://gitlab.com/simonpunk/susfs4ksu.git",
+  "branch": "kernel-4.19",
+  "revision": "001e69919c6271f690fd00b17e4c721c9e599152",
+  "version": "v1.5.5",
+  "variant": "NON-GKI",
+  "directory": "patches/susfs-4.19",
+  "files": {
+    "LICENSE": "3da27bc7c6a063f498b4278372d48e113453f93aecc709f44276e278fc0cac12",
+    "kernel_patches/50_add_susfs_in_kernel-4.19.patch": "818032e63fb25574c66d0130a9a66a31c80f0b681f5d99fc1f96a50c251934f2",
+    "kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch": "25056cc600a0c5a4dd395990d19ddda690fb3aaafb824c963389698547c025d4",
+    "kernel_patches/fs/susfs.c": "cd117f5a7900048fdf2abf87d70ef65c01c634b2ff6ccf8fe079fbd6766d7251",
+    "kernel_patches/include/linux/susfs.h": "fb0b83e9f4188d8887e8a63554bf8c551cdf7544924da93e973f7d2ea19451b8",
+    "kernel_patches/include/linux/susfs_def.h": "b40f4018de7aa9c5b93b2973b9e4ed2eaaeb0bacbe02e4df8376eac13d309bf3",
+    "ksu_susfs/jni/main.c": "d1c9e60430cf2d82272c42ff99573e6bf6c7b1004dc2680fac3275ffd562146d"
+  }
+}
