@@ -33,4 +33,6 @@ Only the device and stock firmware listed above are supported. Exact source vers
 
 The artifact contains `Image.lz4`, ABI reports, build metadata and logs. Artifacts from failed runs are for diagnostics only.
 
+Leave `baseline_run_id` empty for a fresh stock baseline. An earlier successful standard-profile run in your fork can be reused only after source, checksum and stock-config validation; all stock export CRCs are still compared.
+
 The SUSFS artifact also includes `ksu_susfs_arm64`, its source lock, and `pixel5-susfs-module-v1.5.5.zip`. Install this mountless module only after booting the matching SUSFS kernel. SUS_SU and automatic overlayfs spoofing are disabled. SUSFS does not guarantee that every app will accept a rooted or unlocked device.

@@ -33,4 +33,6 @@
 
 產物包含 `Image.lz4`、ABI 報告、建置資訊與記錄檔。失敗 run 的產物僅供診斷。
 
+`baseline_run_id` 留空會重新編譯原廠基準。也可填入自己 Fork 中先前成功的標準 profile run；必須通過來源、雜湊與原廠設定驗證，仍會比對全部原廠匯出 CRC。
+
 SUSFS 產物另含 `ksu_susfs_arm64`、來源 lock 與 `pixel5-susfs-module-v1.5.5.zip`。先啟動相符的 SUSFS 核心，再安裝此免掛載模組。此 profile 停用 SUS_SU 與自動 overlayfs 偽裝；不能保證所有 App 都接受 root 或已解鎖裝置。

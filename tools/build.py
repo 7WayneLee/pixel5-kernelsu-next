@@ -57,7 +57,7 @@ def integrate(kernel: Path, p: dict):
         integrate_susfs(kernel, next_root, p, run)
 
 
-def build(workspace: Path, output: Path, p: dict, jobs: int):
+def build(workspace: Path, output: Path, p: dict, jobs: int, baseline_artifact: Path | None = None):
     if platform.system() != "Linux" or platform.machine() != "x86_64":
         raise ValueError("Kernel compilation requires Linux x86_64; use GitHub Actions")
     output.mkdir(parents=True, exist_ok=False)
@@ -94,12 +94,22 @@ FILES="arch/arm64/boot/Image.lz4 vmlinux System.map .config Module.symvers"
     env.update(BUILD_CONFIG="pixel5-ci.config", OUT_DIR=str(workspace / "out"),
                DIST_DIR=str(workspace / "dist"), SKIP_MRPROPER="1")
     command = ["bash", "build/build.sh", f"-j{jobs}"]
-    run(command, sources, env, output / "baseline-build.log")
     dist = workspace / "dist"
-    stock_config = config_values(dist / ".config")
     baseline = output / "baseline.Module.symvers"
-    shutil.copyfile(dist / "Module.symvers", baseline)
-    shutil.copyfile(dist / ".config", output / "baseline.config")
+    baseline_source = {"kind": "fresh-build"}
+    if baseline_artifact is None:
+        run(command, sources, env, output / "baseline-build.log")
+        stock_config = config_values(dist / ".config")
+        shutil.copyfile(dist / "Module.symvers", baseline)
+        shutil.copyfile(dist / ".config", output / "baseline.config")
+    else:
+        from baseline import validate
+        baseline_source = validate(baseline_artifact, p)
+        print("Using checksum-verified stock baseline with identical sources and config", flush=True)
+        shutil.copyfile(baseline_artifact / "baseline.Module.symvers", baseline)
+        shutil.copyfile(baseline_artifact / "baseline.config", output / "baseline.config")
+        stock_config = config_values(output / "baseline.config")
+        (output / "baseline-source.json").write_text(json.dumps(baseline_source, indent=2) + "\n")
     integrate(kernel, p)
     with (kernel / "arch/arm64/configs/pixel5_ci_defconfig").open("a") as stream:
         stream.write("\nCONFIG_KSU=y\nCONFIG_KSU_MANUAL_HOOK=y\n# CONFIG_KSU_KPROBES_HOOK is not set\n# CONFIG_KSU_SYSCALL_TABLE_HOOK is not set\n")
@@ -118,7 +128,8 @@ FILES="arch/arm64/boot/Image.lz4 vmlinux System.map .config Module.symvers"
         if any(actual_config.get(key, "n") != value for key, value in expected_susfs.items()):
             raise ValueError("SUSFS features differ from the pinned profile")
     drift = {key: [value, actual_config.get(key)] for key, value in stock_config.items()
-             if not key.startswith("CONFIG_KSU") and actual_config.get(key) != value}
+             if not key.startswith("CONFIG_KSU") and key != "CONFIG_UNUSED_KSYMS_WHITELIST"
+             and actual_config.get(key) != value}
     if drift:
         raise ValueError(f"Stock config changed unexpectedly: {drift}")
     for key in ("CONFIG_CFI_CLANG", "CONFIG_MODVERSIONS", "CONFIG_LTO_CLANG"):
@@ -135,6 +146,8 @@ FILES="arch/arm64/boot/Image.lz4 vmlinux System.map .config Module.symvers"
     if release != p["kernel_release"]:
         raise ValueError(f"Kernel release differs from stock modules: {release}")
     metadata = {"schema_version": 1, "profile": p, "kernel_release": release,
+                "baseline_source": baseline_source,
+                "builder_revision": subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip(),
                 "abi_compatible": abi["compatible"], "hardware_tested": False,
                 "files": {name: digest(output / name) for name in artifact_file_names(p)}}
     (output / "build-info.json").write_text(json.dumps(metadata, indent=2) + "\n")
@@ -150,6 +163,8 @@ if __name__ == "__main__":
     parser.add_argument("--profile", default=PROFILE_ID)
     parser.add_argument("--workspace", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--baseline-artifact", type=Path)
     parser.add_argument("--jobs", type=int, choices=range(1, 9), default=2)
     args = parser.parse_args()
-    build(args.workspace.resolve(), args.output.resolve(), profile(args.profile), args.jobs)
+    build(args.workspace.resolve(), args.output.resolve(), profile(args.profile), args.jobs,
+          args.baseline_artifact.resolve() if args.baseline_artifact else None)

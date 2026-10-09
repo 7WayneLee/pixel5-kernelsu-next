@@ -11,9 +11,15 @@ on:
         options:
           - redfin-up1a-231105-001-b2
           - redfin-up1a-231105-001-b2-susfs
+      baseline_run_id:
+        description: Optional successful standard-profile run in this repository; empty builds a fresh stock baseline
+        type: string
+        required: false
+        default: ''
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: kernel-${{ github.ref }}-${{ inputs.profile }}
@@ -25,6 +31,7 @@ jobs:
     timeout-minutes: 240
     env:
       BUILD_PROFILE: ${{ inputs.profile }}
+      BASELINE_RUN_ID: ${{ inputs.baseline_run_id }}
     steps:
       - name: Check out project
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -46,10 +53,22 @@ jobs:
         run: |
           python3 tools/sync_sources.py --profile "$BUILD_PROFILE" \
             --workspace "$RUNNER_TEMP/pixel5/sources" --jobs 4
-      - name: Build stock baseline and Next, then check module ABI
+      - name: Download optional stock baseline
+        if: inputs.baseline_run_id != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          [[ "$BASELINE_RUN_ID" =~ ^[0-9]+$ ]] || { echo "Invalid baseline run ID"; exit 1; }
+          gh run download "$BASELINE_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --pattern 'pixel5-redfin-up1a-231105-001-b2-*' --dir "$RUNNER_TEMP/pixel5-baseline"
+      - name: Build kernel and compare every stock module export CRC
+        run: |
+          BASELINE_ARGS=()
+          if [ -n "$BASELINE_RUN_ID" ]; then
+            BASELINE_ARGS=(--baseline-artifact "$RUNNER_TEMP/pixel5-baseline")
+          fi
           python3 tools/build.py --profile "$BUILD_PROFILE" \
-            --workspace "$RUNNER_TEMP/pixel5" --output "$GITHUB_WORKSPACE/artifacts" --jobs 2
+            --workspace "$RUNNER_TEMP/pixel5" --output "$GITHUB_WORKSPACE/artifacts" --jobs 2 "${BASELINE_ARGS[@]}"
       - name: Package matching mountless SUSFS module
         if: endsWith(inputs.profile, '-susfs')
         run: |

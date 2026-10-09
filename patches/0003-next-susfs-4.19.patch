@@ -172,13 +172,16 @@ index 08f5ffb4..2d65e515 100644
  	pr_info("welcome to KernelSU version " __stringify(KERNEL_SU_VERSION) ", package name " KSU_MANAGER_PACKAGE "\n");
  #else
 diff --git a/kernel/feature/kernel_umount.c b/kernel/feature/kernel_umount.c
-index 275dde8d..c5cf7835 100644
+index 275dde8d..4a5261bf 100644
 --- a/kernel/feature/kernel_umount.c
 +++ b/kernel/feature/kernel_umount.c
-@@ -95,8 +95,34 @@ static void try_umount(const char *mnt, int flags)
+@@ -95,16 +95,56 @@ static void try_umount(const char *mnt, int flags)
      ksu_umount_mnt(mnt, &path, flags);
  }
  
++#ifdef CONFIG_KSU_SUSFS
++#include <linux/susfs_def.h>
++#endif
 +#ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
 +#include <linux/susfs.h>
 +extern bool susfs_is_mnt_devname_ksu(struct path *path);
@@ -210,8 +213,17 @@ index 275dde8d..c5cf7835 100644
  };
  
  static void umount_tw_func(struct callback_head *cb)
-@@ -105,6 +131,9 @@ static void umount_tw_func(struct callback_head *cb)
+ {
+ 	struct umount_tw *tw = container_of(cb, struct umount_tw, cb);
  	const struct cred *saved = override_creds(ksu_cred);
++#ifdef CONFIG_KSU_SUSFS
++    u64 saved_susfs_state;
++    /* Kernel unmount lookups run as root, even if the caller is a hidden app. */
++    task_lock(current);
++    saved_susfs_state = current->susfs_task_state;
++    current->susfs_task_state &= ~TASK_STRUCT_NON_ROOT_USER_APP_PROC;
++    task_unlock(current);
++#endif
  
      struct mount_entry *entry;
 +#ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
@@ -220,7 +232,19 @@ index 275dde8d..c5cf7835 100644
      down_read(&mount_list_lock);
      list_for_each_entry(entry, &mount_list, list) {
          pr_info("%s: unmounting: %s flags: 0x%x\n", __func__, entry->umountable, entry->flags);
-@@ -122,9 +151,11 @@ int ksu_handle_umount(uid_t old_uid, uid_t new_uid)
+@@ -112,6 +152,11 @@ static void umount_tw_func(struct callback_head *cb)
+     }
+     up_read(&mount_list_lock);
+ 
++#ifdef CONFIG_KSU_SUSFS
++    task_lock(current);
++    current->susfs_task_state = saved_susfs_state;
++    task_unlock(current);
++#endif
+ 	revert_creds(saved);
+ 
+ 	kfree(tw);
+@@ -122,9 +167,11 @@ int ksu_handle_umount(uid_t old_uid, uid_t new_uid)
  	struct umount_tw *tw;
  
  	// if there isn't any module mounted, just ignore it!
@@ -232,7 +256,7 @@ index 275dde8d..c5cf7835 100644
  
  	if (!ksu_kernel_umount_enabled) {
  		return 0;
-@@ -166,6 +197,9 @@ int ksu_handle_umount(uid_t old_uid, uid_t new_uid)
+@@ -166,6 +213,9 @@ int ksu_handle_umount(uid_t old_uid, uid_t new_uid)
  		return 0;
  
  	tw->cb.func = umount_tw_func;

@@ -49,6 +49,7 @@ def integrate(kernel: Path, next_root: Path, p: dict, run):
         (kernel, directory / "kernel_patches/50_add_susfs_in_kernel-4.19.patch"),
         (next_root, ROOT / "patches/0003-next-susfs-4.19.patch"),
         (kernel, ROOT / "patches/0004-susfs-prctl.patch"),
+        (kernel, ROOT / "patches/0005-susfs-next-symbols.patch"),
     ):
         run(["git", "-C", str(target), "apply", "--check", str(patch)])
         run(["git", "-C", str(target), "apply", str(patch)])
@@ -64,6 +65,12 @@ def build_tool(p: dict, output: Path, run):
     if text.count("#include <android/log.h>") != 1:
         raise ValueError("Unexpected SUSFS tool logging include")
     text = text.replace("#include <android/log.h>", "#include <limits.h> /* Static Linux build; Android logging is unused. */")
+    old = "\tbool                    is_statically;"
+    if text.count(old) != 1:
+        raise ValueError("Unexpected SUSFS kstat command payload")
+    # The kernel's command ABI declares this member as int, not bool. Avoid
+    # interpreting uninitialized struct padding as part of a false value.
+    text = text.replace(old, "\tint                     is_statically;")
     source = output / "ksu_susfs-build.c"
     source.write_text(text)
     run(["aarch64-linux-gnu-gcc", "-static", "-O2", "-Wall", "-Wextra",

@@ -65,6 +65,7 @@ echo "SUSFS v1.5.5: stock uname and /data/adb path hiding applied" > "$STATUS"
         "ksu_susfs": (artifact / "ksu_susfs_arm64").read_bytes(),
         "LICENSE": (directory / "LICENSE").read_bytes(),
         "source/main.c": (directory / "ksu_susfs/jni/main.c").read_bytes(),
+        "source/build-adapter.py": Path(__file__).with_name("susfs.py").read_bytes(),
         "source/susfs.lock.json": json.dumps(lock, indent=2).encode() + b"\n",
         "source/build-info.json": json.dumps(info, indent=2).encode() + b"\n",
         "source/README.txt": b"Source and static-build adapter: https://github.com/7WayneLee/pixel5-kernelsu-next\nBuild adapters: tools/susfs.py and tools/package_susfs.py\nThis module requires the matching patched kernel and does not guarantee app compatibility.\n",
