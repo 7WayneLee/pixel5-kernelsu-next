@@ -11,6 +11,7 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #define MAGIC 0xDEADBEEF
@@ -133,6 +134,39 @@ static int mount_hidden(const char *fixture)
     return found || !accessible || !cleanup;
 }
 
+static int run_child(const char *fixture, int hidden)
+{
+    int fds[2], status;
+    if (pipe(fds))
+        fatal("report pipe");
+    pid_t pid = fork();
+    if (pid < 0)
+        fatal("test child");
+    if (!pid) {
+        close(fds[0]);
+        if (dup2(fds[1], STDOUT_FILENO) < 0 || dup2(fds[1], STDERR_FILENO) < 0)
+            fatal("report descriptor");
+        close(fds[1]);
+        exit(visibility(fixture, hidden));
+    }
+    close(fds[1]);
+    char buffer[4096];
+    ssize_t count;
+    while ((count = read(fds[0], buffer, sizeof(buffer))) > 0) {
+        ssize_t offset = 0;
+        while (offset < count) {
+            ssize_t done = write(STDOUT_FILENO, buffer + offset, count - offset);
+            if (done <= 0)
+                fatal("report output");
+            offset += done;
+        }
+    }
+    close(fds[0]);
+    if (waitpid(pid, &status, 0) < 0)
+        fatal("test wait");
+    return WIFEXITED(status) ? WEXITSTATUS(status) : 2;
+}
+
 int main(int argc, char **argv)
 {
     if (argc == 2 && !strcmp(argv[1], "denied"))
@@ -143,7 +177,7 @@ int main(int argc, char **argv)
     }
     if (argc == 2 && !strcmp(argv[1], "control"))
         return root_control();
-    const char *prefix = "/data/local/tmp/pixel5-susfs-test-";
+    const char *prefix = "/data/misc/pixel5-susfs-test-";
     int valid_fixture = argc == 3 && strlen(argv[2]) < 256 &&
         !strncmp(argv[2], prefix, strlen(prefix)) &&
         argv[2][strlen(prefix)] != 0;
@@ -154,12 +188,12 @@ int main(int argc, char **argv)
     }
     if (valid_fixture) {
         if (!strcmp(argv[1], "app-visible"))
-            return visibility(argv[2], 0);
+            return run_child(argv[2], 0);
         if (!strcmp(argv[1], "app-hidden"))
-            return visibility(argv[2], 1);
+            return run_child(argv[2], 1);
         if (!strcmp(argv[1], "mount-hidden"))
             return mount_hidden(argv[2]);
     }
-    fprintf(stderr, "Usage: probe control|denied; probe app-visible|app-hidden|mount-hidden /data/local/tmp/pixel5-susfs-test-ID\n");
+    fprintf(stderr, "Usage: probe control|denied; probe app-visible|app-hidden|mount-hidden /data/misc/pixel5-susfs-test-ID\n");
     return 2;
 }
