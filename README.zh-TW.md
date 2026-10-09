@@ -33,4 +33,4 @@
 
 產物包含 `Image.lz4`、ABI 報告、建置資訊與記錄檔。失敗 run 的產物僅供診斷。
 
-SUSFS 產物另含 `ksu_susfs_arm64` 與來源 lock。必須使用已整合 SUSFS 的核心，單獨安裝模組無法啟用。此 profile 停用 SUS_SU 與自動 overlayfs 偽裝；不能保證所有 App 都接受 root 或已解鎖裝置。
+SUSFS 產物另含 `ksu_susfs_arm64`、來源 lock 與 `pixel5-susfs-module-v1.5.5.zip`。先啟動相符的 SUSFS 核心，再安裝此免掛載模組。此 profile 停用 SUS_SU 與自動 overlayfs 偽裝；不能保證所有 App 都接受 root 或已解鎖裝置。

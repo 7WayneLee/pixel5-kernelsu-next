@@ -50,6 +50,12 @@ jobs:
         run: |
           python3 tools/build.py --profile "$BUILD_PROFILE" \
             --workspace "$RUNNER_TEMP/pixel5" --output "$GITHUB_WORKSPACE/artifacts" --jobs 2
+      - name: Package matching mountless SUSFS module
+        if: endsWith(inputs.profile, '-susfs')
+        run: |
+          python3 tools/package_susfs.py --profile "$BUILD_PROFILE" \
+            --artifact-dir artifacts --output artifacts/pixel5-susfs-module-v1.5.5.zip
+          sha256sum artifacts/pixel5-susfs-module-v1.5.5.zip | sed 's|artifacts/||' >> artifacts/SHA256SUMS.txt
       - name: Summarize result
         if: always()
         run: |

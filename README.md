@@ -33,4 +33,4 @@ Only the device and stock firmware listed above are supported. Exact source vers
 
 The artifact contains `Image.lz4`, ABI reports, build metadata and logs. Artifacts from failed runs are for diagnostics only.
 
-The SUSFS artifact also includes `ksu_susfs_arm64` and its source lock. SUSFS requires the patched kernel; installing a module alone cannot enable it. SUS_SU and automatic overlayfs spoofing are disabled. SUSFS does not guarantee that every app will accept a rooted or unlocked device.
+The SUSFS artifact also includes `ksu_susfs_arm64`, its source lock, and `pixel5-susfs-module-v1.5.5.zip`. Install this mountless module only after booting the matching SUSFS kernel. SUS_SU and automatic overlayfs spoofing are disabled. SUSFS does not guarantee that every app will accept a rooted or unlocked device.
