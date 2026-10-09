@@ -59,8 +59,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           [[ "$BASELINE_RUN_ID" =~ ^[0-9]+$ ]] || { echo "Invalid baseline run ID"; exit 1; }
+          BASELINE_NAME=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$BASELINE_RUN_ID/artifacts" \
+            --jq '.artifacts[] | select(.expired == false and (.name | test("^pixel5-redfin-up1a-231105-001-b2-[0-9]+$"))) | .name')
+          [[ "$BASELINE_NAME" =~ ^pixel5-redfin-up1a-231105-001-b2-[0-9]+$ ]] || { echo "Expected one standard-profile baseline artifact"; exit 1; }
           gh run download "$BASELINE_RUN_ID" --repo "$GITHUB_REPOSITORY" \
-            --pattern 'pixel5-redfin-up1a-231105-001-b2-*' --dir "$RUNNER_TEMP/pixel5-baseline"
+            --name "$BASELINE_NAME" --dir "$RUNNER_TEMP/pixel5-baseline"
       - name: Build kernel and compare every stock module export CRC
         run: |
           BASELINE_ARGS=()
