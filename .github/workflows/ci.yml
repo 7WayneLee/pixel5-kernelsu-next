@@ -41,8 +41,15 @@ jobs:
           aarch64-linux-gnu-gcc -static -O2 -Wall -Wextra -Werror tools/susfs_probe.c -o probe-artifact/susfs_probe_arm64
           aarch64-linux-gnu-strip probe-artifact/susfs_probe_arm64
           cp tools/susfs_probe.c probe-artifact/
+          PYTHONPATH=tools python3 - <<'PY'
+          from pathlib import Path
+          from build import run
+          from common import profile
+          from susfs import build_tool
+          build_tool(profile('redfin-up1a-231105-001-b2-susfs'), Path('probe-artifact'), run)
+          PY
           cd probe-artifact
-          sha256sum susfs_probe_arm64 susfs_probe.c > SHA256SUMS.txt
+          sha256sum susfs_probe_arm64 susfs_probe.c ksu_susfs_arm64 > SHA256SUMS.txt
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: susfs-device-probe

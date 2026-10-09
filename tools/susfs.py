@@ -63,12 +63,14 @@ def build_tool(p: dict, output: Path, run):
     text = (directory / "ksu_susfs/jni/main.c").read_text()
     if text.count("#include <android/log.h>") != 1:
         raise ValueError("Unexpected SUSFS tool logging include")
-    text = text.replace("#include <android/log.h>", "/* Unused Android log header omitted for static Linux build. */")
+    text = text.replace("#include <android/log.h>", "#include <limits.h> /* Static Linux build; Android logging is unused. */")
     source = output / "ksu_susfs-build.c"
     source.write_text(text)
     run(["aarch64-linux-gnu-gcc", "-static", "-O2", "-Wall", "-Wextra",
          "-Wno-unused-parameter", "-Dst_atime_nsec=st_atim.tv_nsec",
          "-Dst_mtime_nsec=st_mtim.tv_nsec", "-Dst_ctime_nsec=st_ctim.tv_nsec",
+         "-Dst_atimensec=st_atim.tv_nsec", "-Dst_mtimensec=st_mtim.tv_nsec",
+         "-Dst_ctimensec=st_ctim.tv_nsec",
          str(source), "-o", str(output / "ksu_susfs_arm64")])
     run(["aarch64-linux-gnu-strip", str(output / "ksu_susfs_arm64")])
     shutil.copyfile(ROOT / p["susfs"]["source_lock"], output / "susfs-source-lock.json")
