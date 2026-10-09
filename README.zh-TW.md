@@ -15,7 +15,7 @@
 | KernelSU Next | `v3.4.0-legacy-pixel5` · 33306 · UAPI 5 |
 | 管理器 | [v3.4.0-29-g3daa5787](https://github.com/KernelSU-Next/KernelSU-Next/actions/runs/37513294225) · 33323 · UAPI 5 |
 | 整合方式 | Built-in、manual hooks；保留原廠 CFI/LTO/MODVERSIONS |
-| 選用 SUSFS | v1.5.5 NON-GKI／kernel-4.19；獨立實驗 profile |
+| 選用 SUSFS | v1.5.5 NON-GKI／kernel-4.19；實驗 profile，已在一部裝置驗證開機與基本隱藏（[紀錄](docs/susfs-validation.md)） |
 | Bootloader | 已解鎖 |
 | 驗證狀態 | 已在一部裝置驗證開機與 ADB root，完整硬體測試待完成（[紀錄](docs/validation.md)） |
 

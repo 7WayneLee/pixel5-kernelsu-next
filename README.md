@@ -15,7 +15,7 @@ Build a KernelSU Next kernel for Pixel 5 using GitHub Actions.
 | KernelSU Next | `v3.4.0-legacy-pixel5` · 33306 · UAPI 5 |
 | Manager | [v3.4.0-29-g3daa5787](https://github.com/KernelSU-Next/KernelSU-Next/actions/runs/37513294225) · 33323 · UAPI 5 |
 | Integration | Built-in, manual hooks; stock CFI/LTO/MODVERSIONS retained |
-| Optional SUSFS | v1.5.5 NON-GKI / kernel-4.19; separate experimental profile |
+| Optional SUSFS | v1.5.5 NON-GKI / kernel-4.19; experimental profile, boot and basic hiding verified on one device ([record](docs/susfs-validation.md)) |
 | Bootloader | Unlocked |
 | Validation | Boot and ADB root verified on one device; full hardware testing pending ([record](docs/validation.md)) |
 
