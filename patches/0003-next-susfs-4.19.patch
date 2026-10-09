@@ -172,10 +172,10 @@ index 08f5ffb4..2d65e515 100644
  	pr_info("welcome to KernelSU version " __stringify(KERNEL_SU_VERSION) ", package name " KSU_MANAGER_PACKAGE "\n");
  #else
 diff --git a/kernel/feature/kernel_umount.c b/kernel/feature/kernel_umount.c
-index 275dde8d..8f841fa9 100644
+index 275dde8d..c5cf7835 100644
 --- a/kernel/feature/kernel_umount.c
 +++ b/kernel/feature/kernel_umount.c
-@@ -95,6 +95,29 @@ static void try_umount(const char *mnt, int flags)
+@@ -95,8 +95,34 @@ static void try_umount(const char *mnt, int flags)
      ksu_umount_mnt(mnt, &path, flags);
  }
  
@@ -204,18 +204,23 @@ index 275dde8d..8f841fa9 100644
 +
  struct umount_tw {
  	struct callback_head cb;
++#ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
++	uid_t uid;
++#endif
  };
-@@ -105,6 +128,9 @@ static void umount_tw_func(struct callback_head *cb)
+ 
+ static void umount_tw_func(struct callback_head *cb)
+@@ -105,6 +131,9 @@ static void umount_tw_func(struct callback_head *cb)
  	const struct cred *saved = override_creds(ksu_cred);
  
      struct mount_entry *entry;
 +#ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
-+    susfs_try_umount_all(current_uid().val);
++    susfs_try_umount_all(tw->uid);
 +#endif
      down_read(&mount_list_lock);
      list_for_each_entry(entry, &mount_list, list) {
          pr_info("%s: unmounting: %s flags: 0x%x\n", __func__, entry->umountable, entry->flags);
-@@ -122,9 +148,11 @@ int ksu_handle_umount(uid_t old_uid, uid_t new_uid)
+@@ -122,9 +151,11 @@ int ksu_handle_umount(uid_t old_uid, uid_t new_uid)
  	struct umount_tw *tw;
  
  	// if there isn't any module mounted, just ignore it!
@@ -227,6 +232,16 @@ index 275dde8d..8f841fa9 100644
  
  	if (!ksu_kernel_umount_enabled) {
  		return 0;
+@@ -166,6 +197,9 @@ int ksu_handle_umount(uid_t old_uid, uid_t new_uid)
+ 		return 0;
+ 
+ 	tw->cb.func = umount_tw_func;
++#ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
++	tw->uid = new_uid;
++#endif
+ 
+ 	int err = task_work_add(current, &tw->cb, TWA_RESUME);
+ 	if (err) {
 diff --git a/kernel/feature/susfs_bridge.c b/kernel/feature/susfs_bridge.c
 new file mode 100644
 index 00000000..4034282a
@@ -449,6 +464,30 @@ index 510057ff..f006ca76 100644
      // we rely on the fact that zygote always call setresuid(3) with same uids
  
      pr_info("handle_setresuid from %d to %d\n", old_uid, new_uid);
+diff --git a/kernel/policy/app_profile.c b/kernel/policy/app_profile.c
+index 5735bdec..acec0bd7 100644
+--- a/kernel/policy/app_profile.c
++++ b/kernel/policy/app_profile.c
+@@ -1,3 +1,6 @@
++#ifdef CONFIG_KSU_SUSFS
++#include <linux/susfs_def.h>
++#endif
+ #include "hook/patch_memory.h"
+ #include "infra/symbol_resolver.h"
+ #include "linux/kallsyms.h"
+@@ -223,6 +226,12 @@ int escape_with_root_profile(void)
+     setup_selinux(profile->selinux_domain, cred);
+ 
+     commit_creds(cred);
++#ifdef CONFIG_KSU_SUSFS
++    /* A newly authorized root process must not retain its app hiding flag. */
++    task_lock(current);
++    current->susfs_task_state &= ~TASK_STRUCT_NON_ROOT_USER_APP_PROC;
++    task_unlock(current);
++#endif
+ 
+     disable_seccomp();
+ 
 diff --git a/kernel/runtime/boot_event.c b/kernel/runtime/boot_event.c
 index ee7c88a2..505d44b8 100644
 --- a/kernel/runtime/boot_event.c
