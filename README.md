@@ -29,7 +29,7 @@ Only the device and stock firmware listed above are supported. Exact source vers
 2. Open **Actions → Build Pixel 5 KernelSU Next → Run workflow**.
 3. Select `redfin-up1a-231105-001-b2` for the verified kernel, or `redfin-up1a-231105-001-b2-susfs` for the experimental SUSFS kernel, and start the workflow.
 4. Wait for the build and ABI checks to succeed.
-5. Open the successful run and download `pixel5-redfin-up1a-231105-001-b2-<run_number>` from **Artifacts**.
+5. Open the successful run and download `pixel5-<profile>-<run_number>` from **Artifacts**, matching the selected profile.
 
 The artifact contains `Image.lz4`, ABI reports, build metadata and logs. Artifacts from failed runs are for diagnostics only.
 

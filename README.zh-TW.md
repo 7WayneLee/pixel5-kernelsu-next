@@ -29,7 +29,7 @@
 2. 開啟 **Actions → Build Pixel 5 KernelSU Next → Run workflow**。
 3. 選擇已驗證的 `redfin-up1a-231105-001-b2`，或實驗版 `redfin-up1a-231105-001-b2-susfs`，開始執行。
 4. 等待核心編譯與 ABI 檢查成功。
-5. 開啟成功的 run，在 **Artifacts** 下載 `pixel5-redfin-up1a-231105-001-b2-<run_number>`。
+5. 開啟成功的 run，在 **Artifacts** 下載所選 profile 對應的 `pixel5-<profile>-<run_number>`。
 
 產物包含 `Image.lz4`、ABI 報告、建置資訊與記錄檔。失敗 run 的產物僅供診斷。
 

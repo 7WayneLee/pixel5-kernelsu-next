@@ -268,10 +268,10 @@ index 275dde8d..4a5261bf 100644
  	if (err) {
 diff --git a/kernel/feature/susfs_bridge.c b/kernel/feature/susfs_bridge.c
 new file mode 100644
-index 00000000..4034282a
+index 00000000..03c6adb6
 --- /dev/null
 +++ b/kernel/feature/susfs_bridge.c
-@@ -0,0 +1,186 @@
+@@ -0,0 +1,187 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/* Pixel 5 adapter for the pinned SUSFS 1.5.5 NON-GKI command ABI.
 + * This is a root-only control interface, not a legacy KernelSU root API.
@@ -281,6 +281,7 @@ index 00000000..4034282a
 +#include <linux/namei.h>
 +#include <linux/nsproxy.h>
 +#include <linux/sched/task.h>
++#include <linux/stat.h>
 +#include <linux/susfs.h>
 +#include <linux/uaccess.h>
 +#include "selinux/selinux.h"
