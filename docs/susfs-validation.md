@@ -18,7 +18,7 @@ completed successfully in 36m34s using builder commit
 | Stock vendor_boot modules | All 218 modules passed import CRC and kernel release checks |
 | Boot packing | Stock ramdisk retained; AVB footer regenerated and signature/hash verified |
 | Temporary boot | Passed twice before permanent flashing |
-| Permanent boot | `boot_a` write returned OKAY; two normal reboots passed; partition SHA-256 exactly matches the tested image |
+| Permanent boot | `boot_a` write returned OKAY; three normal reboots passed; partition SHA-256 exactly matches the tested image |
 | Running kernel | `/proc/config.gz` exactly matches the artifact; stock CFI/LTO/MODVERSIONS remain enabled |
 | Android / root | Boot completed, SELinux Enforcing, `su -c id` returned UID 0 in `u:r:ksu:s0` |
 | Modules / services | 328 loaded modules; surfaceflinger, audioserver, cameraserver and both zygotes running |
@@ -27,7 +27,7 @@ completed successfully in 36m34s using builder commit
 | Path hiding | Test UID 19990 initially saw both files; after adding one SUS_PATH rule, its stat returned ENOENT while the control file stayed visible |
 | Mount hiding | Bind mount in a private test namespace absent from mountinfo, while the mounted file remained accessible; detached successfully |
 | Symbol hiding | No `ksu_`, `kernelsu`, `susfs_` or `ksud` names found in `/proc/kallsyms` |
-| Matching module | `pixel5_susfs`, v1.5.5-pixel5 installed; mountless; stock uname and `/data/adb` hiding configuration automatically reapplied after normal boot |
+| Matching module | `pixel5_susfs`, v1.5.5-pixel5 installed; mountless; stock uname and `/data/adb` hiding configuration automatically reapplied after normal boot; deleting its status file and observing recreation confirmed the boot script ran |
 | Cleanup | Test fixtures, binaries and installation ZIP removed from the phone; final reboot cleared volatile test rules |
 
 The application test is a disposable native process with a private mount
