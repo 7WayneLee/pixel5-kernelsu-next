@@ -43,9 +43,15 @@ if [ "$("$BIN" show version)" != v1.5.5 ]; then
   exit 0
 fi
 "$BIN" enable_log 0
-"$BIN" set_uname '{p['kernel_release']}' '#1 SMP PREEMPT Thu Sep 7 05:43:03 UTC 2023'
+"$BIN" set_uname '{p['kernel_release']}' '#1 SMP PREEMPT Thu Sep 7 05:43:03 UTC 2023' || {{
+  echo "SUSFS uname configuration failed" > "$STATUS"
+  exit 0
+}}
 if [ -d /data/adb ]; then
-  "$BIN" add_sus_path /data/adb
+  "$BIN" add_sus_path /data/adb || {{
+    echo "SUSFS path configuration failed" > "$STATUS"
+    exit 0
+  }}
 fi
 echo "SUSFS v1.5.5: stock uname and /data/adb path hiding applied" > "$STATUS"
 '''
